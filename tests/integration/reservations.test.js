@@ -36,6 +36,21 @@ describe('Reservas', () => {
     expect(res.body.total).toBe(30000);
   });
 
+test('reserva sobre habitación en mantenimiento responde 409', async () => {
+  await prisma.room.update({
+    where: { id: roomId },
+    data: { estado: 'MANTENIMIENTO' },
+  });
+
+  const res = await request(app)
+    .post('/api/v1/reservations')
+    .set('Authorization', await auth())
+    .send({ guestId, roomId, checkIn: '2026-09-10', checkOut: '2026-09-13' });
+
+  expect(res.status).toBe(409);
+  expect(res.body.error.code).toBe('CONFLICT');
+});
+
   test('rango de fechas inválido responde 422', async () => {
     const res = await request(app)
       .post('/api/v1/reservations')

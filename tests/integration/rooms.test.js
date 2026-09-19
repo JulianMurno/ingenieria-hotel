@@ -47,6 +47,16 @@ describe('Habitaciones', () => {
     expect(res.body.error.code).toBe('FORBIDDEN');
   });
 
+  test('capacidad inválida responde 422', async () => {
+  const res = await request(app)
+    .post('/api/v1/rooms')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ numero: '101', tipo: 'SINGLE', tarifa: 5000, capacidad: 0 });
+
+  expect(res.status).toBe(422);
+  expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
   test('listado responde 200 con las habitaciones', async () => {
     await request(app)
       .post('/api/v1/rooms')

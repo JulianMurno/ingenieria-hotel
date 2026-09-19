@@ -52,6 +52,22 @@ describe('Disponibilidad', () => {
     expect(res.body[0].tipo).toBe('DOBLE');
   });
 
+ test('habitación en mantenimiento no aparece en disponibilidad', async () => {
+  const rooms = await seedRooms();
+  await prisma.room.update({
+    where: { id: rooms[0].id },
+    data: { estado: 'MANTENIMIENTO' },
+  });
+
+  const res = await request(app)
+    .get('/api/v1/availability')
+    .set('Authorization', await authHeader('admin'))
+    .query({ checkIn: '2026-09-10', checkOut: '2026-09-12' });
+
+  expect(res.status).toBe(200);
+  expect(res.body.find((r) => r.id === rooms[0].id)).toBeUndefined();
+}); 
+
   test('sin disponibilidad devuelve lista vacía cuando el rango está cubierto', async () => {
     const rooms = await seedRooms();
     const guest = await prisma.guest.create({

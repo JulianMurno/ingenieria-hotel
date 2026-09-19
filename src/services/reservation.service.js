@@ -23,6 +23,13 @@ async function createReservation(data) {
   const checkIn = toDate(data.checkIn);
   const checkOut = toDate(data.checkOut);
   const room = await ensureResourceExists(data.guestId, data.roomId);
+    if (room.estado === 'MANTENIMIENTO') {
+    throw new HttpError(
+      409,
+      'CONFLICT',
+      'La habitación está en mantenimiento y no admite reservas',
+    );
+  }
   const nights = calculateNights(checkIn, checkOut);
 
   return prisma.$transaction(async (tx) => {

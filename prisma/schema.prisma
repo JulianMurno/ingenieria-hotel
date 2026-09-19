@@ -31,6 +31,11 @@ model Room {
   tipo         String
   tarifa       Int
   createdAt    DateTime      @default(now())
+  estado       String        @default("DISPONIBLE")
+  capacidad    Int           @default(1)
+  descripcion  String?
+  comodidades  String?
+  fotos        String?
   reservations Reservation[]
 }
 
