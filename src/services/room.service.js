@@ -1,5 +1,7 @@
 const roomRepo = require('../repositories/room.repository');
 const { HttpError } = require('../lib/httpError');
+const resRepo = require('../repositories/reservation.repository');
+const { toDate } = require('./business.service');
 
 async function createRoom(data) {
   const existing = await roomRepo.findByNumero(data.numero);
@@ -9,8 +11,43 @@ async function createRoom(data) {
   return roomRepo.create(data);
 }
 
-async function listRooms() {
-  return roomRepo.findMany();
+async function listRooms(query = {}) {
+  const { tipo, disponible, tarifaMin, tarifaMax, checkIn, checkOut, page = 1, limit = 10 } = query;
+
+  const where = {};
+  if (tipo) where.tipo = tipo;
+  if (tarifaMin || tarifaMax) {
+    where.tarifa = {};
+    if (tarifaMin) where.tarifa.gte = Number(tarifaMin);
+    if (tarifaMax) where.tarifa.lte = Number(tarifaMax);
+  }
+
+  let excludedIds = [];
+  if (disponible === 'true' || disponible === true) {
+    where.estado = 'DISPONIBLE';
+    if (checkIn && checkOut) {
+      const bookedRoomIds = await resRepo.findBookedRoomIds({
+        checkIn: toDate(checkIn),
+        checkOut: toDate(checkOut),
+      });
+      excludedIds = bookedRoomIds;
+    }
+  }
+  if (excludedIds.length > 0) where.id = { notIn: excludedIds };
+
+  const pageNum = Number(page);
+  const limitNum = Number(limit);
+  const skip = (pageNum - 1) * limitNum;
+
+  const [data, total] = await Promise.all([
+    roomRepo.findMany({ where, skip, take: limitNum }),
+    roomRepo.count(where),
+  ]);
+
+  return {
+    data,
+    pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
+  };
 }
 
 async function getRoom(id) {

@@ -12,8 +12,12 @@ function findByNumero(numero) {
   return prisma.room.findUnique({ where: { numero } });
 }
 
-function findMany() {
-  return prisma.room.findMany({ orderBy: { numero: 'asc' } });
+function findMany({ where = {}, skip, take } = {}) {
+  return prisma.room.findMany({ where, orderBy: { numero: 'asc' }, skip, take });
+}
+
+function count(where = {}) {
+  return prisma.room.count({ where });
 }
 
 function update(id, data) {
@@ -24,4 +28,4 @@ function remove(id) {
   return prisma.room.delete({ where: { id } });
 }
 
-module.exports = { create, findById, findByNumero, findMany, update, remove };
+module.exports = { create, findById, findByNumero, findMany, count, update, remove };

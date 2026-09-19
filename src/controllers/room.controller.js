@@ -11,8 +11,8 @@ async function createRoom(req, res, next) {
 
 async function listRooms(req, res, next) {
   try {
-    const rooms = await roomService.listRooms();
-    return res.json(rooms);
+    const result = await roomService.listRooms(req.query);
+    return res.json(result);    
   } catch (err) {
     return next(err);
   }
