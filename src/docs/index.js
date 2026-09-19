@@ -104,11 +104,44 @@ const spec = {
         },
       },
       get: {
-        tags: ['Habitaciones'],
-        summary: 'Lista las habitaciones',
-        security: [{ bearerAuth: [] }],
-        responses: { 200: { description: 'Lista de habitaciones' } },
+  tags: ['Habitaciones'],
+  summary: 'Lista las habitaciones con filtros y paginación',
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    { name: 'tipo', in: 'query', schema: { type: 'string' }, description: 'Filtra por tipo de habitación (SINGLE, DOBLE, SUITE)' },
+    { name: 'disponible', in: 'query', schema: { type: 'boolean' }, description: 'Si es true, excluye habitaciones en mantenimiento o reservadas' },
+    { name: 'checkIn', in: 'query', schema: { type: 'string', format: 'date' }, description: 'Fecha de entrada, usada junto con disponible' },
+    { name: 'checkOut', in: 'query', schema: { type: 'string', format: 'date' }, description: 'Fecha de salida, usada junto con disponible' },
+    { name: 'tarifaMin', in: 'query', schema: { type: 'number' }, description: 'Tarifa mínima' },
+    { name: 'tarifaMax', in: 'query', schema: { type: 'number' }, description: 'Tarifa máxima' },
+    { name: 'page', in: 'query', schema: { type: 'integer', default: 1 }, description: 'Número de página' },
+    { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 }, description: 'Cantidad de resultados por página' },
+  ],
+  responses: {
+    200: {
+      description: 'Lista paginada de habitaciones',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              data: { type: 'array', items: { $ref: '#/components/schemas/Room' } },
+              pagination: {
+                type: 'object',
+                properties: {
+                  page: { type: 'integer' },
+                  limit: { type: 'integer' },
+                  total: { type: 'integer' },
+                  totalPages: { type: 'integer' },
+                },
+              },
+            },
+          },
+        },
       },
+    },
+  },
+},
     },
     '/rooms/{id}': {
       patch: {
@@ -325,20 +358,30 @@ const spec = {
         type: 'object',
         required: ['numero', 'tipo', 'tarifa'],
         properties: {
-          numero: { type: 'string' },
-          tipo: { $ref: '#/components/schemas/RoomType' },
-          tarifa: {
-            type: 'integer',
-            description: 'Tarifa por noche en la unidad base de la moneda',
-          },
+        numero: { type: 'string' },
+        tipo: { $ref: '#/components/schemas/RoomType' },
+        tarifa: {
+          type: 'integer',
+          description: 'Tarifa por noche en la unidad base de la moneda',
+        },
+        estado: { type: 'string', enum: ['DISPONIBLE', 'MANTENIMIENTO'], description: 'Estado actual de la habitación' },
+        capacidad: { type: 'integer', description: 'Cantidad máxima de huéspedes' },
+        descripcion: { type: 'string', nullable: true },
+        comodidades: { type: 'string', nullable: true },
+        fotos: { type: 'string', nullable: true },
         },
       },
       RoomUpdate: {
         type: 'object',
         properties: {
-          numero: { type: 'string' },
-          tipo: { $ref: '#/components/schemas/RoomType' },
-          tarifa: { type: 'integer' },
+        numero: { type: 'string' },
+        tipo: { $ref: '#/components/schemas/RoomType' },
+        tarifa: { type: 'integer' },
+        estado: { type: 'string', enum: ['DISPONIBLE', 'MANTENIMIENTO'] },
+        capacidad: { type: 'integer' },
+        descripcion: { type: 'string', nullable: true },
+        comodidades: { type: 'string', nullable: true },
+        fotos: { type: 'string', nullable: true }, 
         },
       },
       ReservationCreate: {
